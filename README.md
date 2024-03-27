@@ -18,3 +18,6 @@ Git Repository를 Local Client에 Clone 합니다. Local Client는 Mac 또는 Li
 <pre><code>https://github.com/huhjinsung/Airflow-EMR-on-EC2.git</code>
 <code>cd /1_Setup</code>
 <code>terraform init</code></pre>
+<code>terraform apply -auto-approve </code></pre>
+
+## Reference
