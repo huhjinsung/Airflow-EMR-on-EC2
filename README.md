@@ -5,10 +5,10 @@
 
 실습을 위한 아키텍처는 아래와 같습니다.
 
-![Alt text](/architecture_aws.png)
+![Alt text](/pic/architecture_aws.png)
 
 ## 사전 요구사항
-1. 인프라 구성을 위한 Terraform의 이해가 필요합니다.
+1. 인프라 구성을 위해 Local Client에 Terraform 설치가 필요합니다.
 2. Airflow Dag, Pyspark 이해를 위한 기본 Python 지식이 필요합니다.
 3. 실습은 AWS의 us-east-1 리전에서 진행합니다.
 
@@ -27,4 +27,8 @@ Terraform을 실행하기 위해서는 아래의 Input 값들이 필요합니다
 | AWS Access Key | AWS의 계정의 Access Key를 입력합니다. |
 | AWS Secret Key | AWS의 계정의 Secret Key를 입력합니다. |
 | Bucket Name | 생성하려는 Bucket의 이름을 입력합니다. |
+
+Terraform이 성공적으로 실행되면, Terraform output 값들이 출력됩니다. 출력된 값 중 airflow_ip_addr에 표시된 ip 주소를 웹 브라우저에 접속하고 admin/admin으로 Airflow WebUI에 접속합니다. Airflow WebUI에 성공적으로 접속하게되면 아래와 같이 Airflow에 접속이 가능하게 됩니다.
+
+<img src="/pic/airflowUI.png" width="50%" height="50%"></img><br/>
 ## Reference
