@@ -36,18 +36,18 @@ Aurora와 EC2 인스턴스간 연결을 확인하고, Aurora에서 Table을 생�
 
 <pre>
 <code># 환경변수 설정</code>
-<code>export RAW_DATA_PATH=[RAW_DATA_PATH]</code>
-<code>export DAG_PATH=[DAG_PATH]</code>
-<code>export SUBNET_ID=[SUBNET_ID]</code>
 <code>export S3_PATH=[S3_PATH]</code>
+<code>export DAG_PATH=[DAG_PATH]</code>
+<code>export SPARK_JOB_PATH=[SPARK_JOB_PATH]</code>
+<code>export RAW_DATA_PATH=[RAW_DATA_PATH]</code>
 <code>export AURORA_ENDPOINT=[AURORA_ENDOINT]</code>
+<code>export SUBNET_ID=[SUBNET_ID]</code>
 
 <code>#데이터베이스 접속 및 테이블 생성</code>
 <code>mysql -u admin -p -h $AURORA_ENDPOINT # PASSWORD=Administrator</code>
 <code>use airflow; </code>
 <code>select database();</code>
 <code>CREATE TABLE emr_table (
-    id INT AUTO_INCREMENT PRIMARY KEY,
     date VARCHAR(255),
     value INT
 );</code>
@@ -62,11 +62,13 @@ Aurora와 EC2 인스턴스간 연결을 확인하고, Aurora에서 Table을 생�
 </pre>
 
 ## Airflow DAG 구성하기
-Airflow는 workflow 작성을 Python 기반으로 작성하며 이를 DAG라고 표현합니다. Airflow의 DAG는 ~/airflow/dags 디렉토리 아래에 저장하며 해당 디렉토리에 저장된 DAG들은 Airflow WebUI를 통해서 확인이 가능합니다. EC2 인스턴스에 접속하여 아래의 명령어를 통해 S3에 저장된 DAG 파일을 DAG 디렉토리에 복사하고, Airflow WebUI에서 확인해봅니다.
+Airflow는 workflow 작성을 Python 기반으로 작성하며 이를 DAG라고 표현합니다. Airflow의 DAG는 ~/airflow/dags 디렉토리 아래에 저장하며 해당 디렉토리에 저장된 DAG들은 Airflow WebUI를 통해서 확인이 가능합니다. EC2 인스턴스에 접속하여 아래의 명령어를 통해 S3에 저장된 DAG 파일을 DAG 디렉토리에 복사합니다.
 <pre>
-<code>sudo aws s3 cp ${S3_PATH}/EMR_DAG.py ~/airflow/dags/ </code>
+<code>sudo aws s3 cp $S3_PATH/EMR_DAG.py /root/airflow/dags/ </code>
 </pre>
+업로드를 완료하고 DAG가 업데이트되면 아래와 같이 Airflow WebServer에서 확인 가능합니다.
 
+![Alt text](/pic/EMR_DAG.png)
 ## 실행 및 결과 확인
 
 ## 리소스 정리
