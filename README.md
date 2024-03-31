@@ -116,6 +116,10 @@ EMR Cluster가 데이터 처리 후 정상적으로 종료되었는지 확인하
 
 ![Alt text](/pic/EMRUI.png)
 
+Airflow의 Workflow Graph에서도 모든 Step이 정상적으로 Success 된 사항을 확인 할 수 있습니다.
+
+![Alt text](/pic/CompleteUI.png)
+
 ## 리소스 정리
 Local Client에서 아래의 명령어를 입력하여 실습에 사용한 모든 리소스들을 삭제합니다.
 <pre>
