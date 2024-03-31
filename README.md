@@ -38,6 +38,7 @@ Terraform이 성공적으로 실행되면, Terraform 출력 값들이 표시됩�
 <pre>
 <code># 환경변수 설정</code>
 <code>export AURORA_ENDPOINT=[AURORA_ENDOINT]</code>
+<code>export S3_PATH=[S3_PATH]</code>
 
 <code>#데이터베이스 접속 및 테이블 생성</code>
 <code>mysql -u admin -p -h $AURORA_ENDPOINT # PASSWORD=Administrator</code>
@@ -64,7 +65,7 @@ Airflow는 workflow 작성을 Python 기반으로 작성하며 이를 DAG라고 
 
 <code>sudo aws s3 cp $S3_PATH/EMR_DAG.py /root/airflow/dags/ </code>
 </pre>
-업로드를 완료하고 DAG가 업데이트되면 아래와 같이 Airflow WebServer에서 확인 가능합니다.
+업로드를 완료하고 DAG가 업데이트되면 아래와 같이 Airflow WebServer에서 확인 가능합니다.(DAG가 업데이트까지 시간이 소요됩니다.)
 
 ![Alt text](/pic/EMR_DAG.png)
 

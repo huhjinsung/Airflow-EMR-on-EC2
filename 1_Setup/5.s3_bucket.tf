@@ -21,7 +21,7 @@ resource "aws_s3_object" "dag" {
 resource "aws_s3_object" "pyspark" {
   bucket = aws_s3_bucket.raw_data_bucket.id
   key    = "spark_job.py"
-  source = "EMR_DAG.py"
+  source = "spark_job.py"
 
   depends_on = [ aws_s3_bucket.raw_data_bucket ]
 }
