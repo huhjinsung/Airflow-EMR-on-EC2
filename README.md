@@ -16,9 +16,8 @@
 Git Repository를 Local Client에 Clone 합니다. Local Client는 Mac 또는 Linux 기반의 VM 또는 EC2 환경이면 됩니다.
 
 <pre><code>git clone https://github.com/huhjinsung/Airflow-EMR-on-EC2.git</code>
-<code>cd /1_Setup</code>
+<code>cd Airflow-EMR-on-EC2/1_Setup</code>
 <code>terraform init</code>
-<code>terraform plan</code>
 <code>terraform apply -auto-approve </code></pre>
 
 Terraform을 실행하기 위해서는 아래의 Input 값들이 필요합니다. 각 AWS 계정에 따라 Input 을 입력합니다.
