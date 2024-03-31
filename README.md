@@ -67,7 +67,7 @@ Airflow는 workflow 작성을 Python 기반으로 작성하며 이를 DAG라고 
 
 Airflow DAG를 살펴보기 위해 DAG를 클릭하여 Graph를 확인합니다.
 
-![Alt text](/pic/workflowUI.png)
+![Alt text](/pic/workflowUI.png)
 
 Workflow는 총 6단계로 구성됩니다.
 1. **START_JOB** : [PythonOperator](https://airflow.apache.org/docs/apache-airflow/stable/howto/operator/python.html)로, Python 기반으로 동작하며 Airflow에 저장된 변수들을 출력합니다.
