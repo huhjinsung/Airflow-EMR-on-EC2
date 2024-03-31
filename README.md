@@ -36,12 +36,7 @@ Aurora와 EC2 인스턴스간 연결을 확인하고, Aurora에서 Table을 생�
 
 <pre>
 <code># 환경변수 설정</code>
-<code>export S3_PATH=[S3_PATH]</code>
-<code>export DAG_PATH=[DAG_PATH]</code>
-<code>export SPARK_JOB_PATH=[SPARK_JOB_PATH]</code>
-<code>export RAW_DATA_PATH=[RAW_DATA_PATH]</code>
 <code>export AURORA_ENDPOINT=[AURORA_ENDOINT]</code>
-<code>export SUBNET_ID=[SUBNET_ID]</code>
 
 <code>#데이터베이스 접속 및 테이블 생성</code>
 <code>mysql -u admin -p -h $AURORA_ENDPOINT # PASSWORD=Administrator</code>
@@ -61,7 +56,7 @@ Aurora와 EC2 인스턴스간 연결을 확인하고, Aurora에서 Table을 생�
 +-------------------+
 </pre>
 
-## Airflow DAG 구성하기
+## Airflow DAG 확인하기
 Airflow는 workflow 작성을 Python 기반으로 작성하며 이를 DAG라고 표현합니다. Airflow의 DAG는 ~/airflow/dags 디렉토리 아래에 저장하며 해당 디렉토리에 저장된 DAG들은 Airflow WebUI를 통해서 확인이 가능합니다. EC2 인스턴스에 접속하여 아래의 명령어를 통해 S3에 저장된 DAG 파일을 DAG 디렉토리에 복사합니다.
 <pre>
 <code>sudo aws s3 cp $S3_PATH/EMR_DAG.py /root/airflow/dags/ </code>
@@ -69,12 +64,41 @@ Airflow는 workflow 작성을 Python 기반으로 작성하며 이를 DAG라고 
 업로드를 완료하고 DAG가 업데이트되면 아래와 같이 Airflow WebServer에서 확인 가능합니다.
 
 ![Alt text](/pic/EMR_DAG.png)
-## 실행 및 결과 확인
+
+Airflow DAG를 살펴보기 위해 DAG를 클릭하여 Graph를 확인합니다.
+
+![Alt text](/pic/workflowUI.png)
+
+Workflow는 총 6단계로 구성됩니다.
+1. **START_JOB** : [PythonOperator](https://airflow.apache.org/docs/apache-airflow/stable/howto/operator/python.html)로, Python 기반으로 동작하며 Airflow에 저장된 변수들을 출력합니다.
+2. **CREATE_EMR_CLUSTER** : [EmrCreateJobFlowOperator](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/_api/airflow/providers/amazon/aws/operators/emr/index.html#airflow.providers.amazon.aws.operators.emr.EmrCreateJobFlowOperator)이며, 사용자가 지정한 설정에 맞게 EMR 클러스터를 생성합니다.
+3. **ADD_EMR_STEP** : [EmrAddStepsOperator](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/_api/airflow/providers/amazon/aws/operators/emr/index.html#airflow.providers.amazon.aws.operators.emr.EmrAddStepsOperato)이며, 생성한 클러스터에 Spark job을 제출합니다. Spark Job은 S3에 저장되어 있는 Job을 활용하며, Pyspark에서 Mysql에 Output을 저장하기 위하여 Mysql JAR도 함께 제출합니다.
+4. **MONITOR_EMR_STEP** : [EmrStepSensor](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/_api/airflow/providers/amazon/aws/sensors/emr/index.html)이며, 제출한 Spark Job이 정상적으로 완료되었는지 확인합니다. Spark Job이 완료 될 경우 Step을 Complete하고 다음 단계로 이동합니다.
+5. **TERMINATE_CLUSTER** : [EmrTerminateJobFlowOperator](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/_api/airflow/providers/amazon/aws/operators/emr/index.html#airflow.providers.amazon.aws.operators.emr.EmrTerminateJobFlowOperator)이며, 데이터 처리가 완료되었으므로 2단계에서 생성한 Cluster를 종료합니다.
+6. **END_JOB** : [DummyOperator](https://airflow.apache.org/docs/apache-airflow/2.2.4/_api/airflow/operators/dummy/index.html)로, 전체 Workflow의 종료를 확인하기 위한 Dummy Step입니다.
+
+## Airflow 설정 및 DAG 실행하기
+
+앞서 살펴본 DAG는 Airflow를 통해 변수를 전달받아 DAG를 실행합니다. DAG의 실행을 위해 1/ S3_PATH, 2/ SUBNET_ID, 3/ RAW_DATA_PATH, 4/ AURORA_ENDPOINT 총 4개의 변수를 전달받습니다.
+Airflow에서는 변수의 설정을 Variables에 저장하며, DAG에서는 Variable.get()의 명령어를 통해 저장한 Variables을 가져옵니다. Variable 설정을 위해 Airflow UI에서 Admin > Variables로 이동하여 위에서 설명한 4개의 변수를 아래와 같이 등록합니다.
+
+![Alt text](/pic/VariablesUI.png)
+
+Airflow에서 AWS의 리소스를 생성하고 삭제하기위해서는 Airflow에 Connection 지정이 필요합니다. Airflow UI에서 Admin > Connections의 항목으로 이동하여 **aws_default** 항목을 편집하며, 각 사용자의 Access Key와 Secret Key를 입력 및 Region을 설정해줍니다.
+
+![Alt text](/pic/ConnectionUI.png)
+
+Variables와 Connection 설정이 완료되었으면, DAG를 실행합니다.
+
+![Alt text](/pic/RunUI.png)
+
+## 결과 확인
 최종 결과 확인을 위하여 EC2에 접속하여, 집계된 결과 값들이 Aurora Mysql 데이터베이스에 잘 저장되었는지 확인합니다.
 <pre>
 <code>mysql -u admin -p -h $AURORA_ENDPOINT # PASSWORD=Administrator</code>
 <code>use airflow; </code>
 <code>select * from emr_table;</code>
+
 +------------+---------+
 | date       | value   |
 +------------+---------+
