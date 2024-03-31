@@ -1,7 +1,7 @@
 # Airflow-EMR-on-EC2
 
 ## 개요
-이번 레포지토리에서는 Airflow를 활용해 AWS의 빅데이터 분석서비스인 EMR을 Scheduling하고 Spark Job을 제출하는 DAG를 설명합니다. Spark Job을 실행시키기위해 1/EMR Cluster 생성 2/Spark Job 제출 3/ Spark Job 완료 4/ Cluster 종료의 순으로 Workflow가 구성됩니다.
+이번 레포지토리에서는 Airflow를 활용해 AWS의 빅데이터 분석서비스인 EMR을 Scheduling하고 Spark Job을 제출하는 DAG를 설명합니다. Spark Job을 실행시키기위해 1/EMR Cluster 생성 2/Spark Job 제출 3/ Spark Job 모니터링 및 완료 4/ Cluster 종료의 순으로 Airflow Workflow가 구성됩니다.
 
 실습을 위한 아키텍처는 아래와 같습니다.
 
@@ -24,15 +24,17 @@ Git Repository를 Local Client에 Clone 합니다. Local Client는 Mac 또는 Li
 Terraform을 실행하기 위해서는 아래의 Input 값들이 필요합니다. 각 AWS 계정에 따라 Input 을 입력합니다.
 | 값 | 내용 |
 |---|---|
-| AWS Access Key | AWS의 계정의 Access Key를 입력합니다. |
-| AWS Secret Key | AWS의 계정의 Secret Key를 입력합니다. |
+| AWS Access Key | AWS 계정의 Access Key를 입력합니다. |
+| AWS Secret Key | AWS 계정의 Secret Key를 입력합니다. |
 | Account ID | AWS 계정의 Account ID를 입력합니다. |
 
-Terraform이 성공적으로 실행되면, Terraform output 값들이 출력됩니다. 출력된 값 중 airflow_ip_addr에 표시된 ip 주소를 웹 브라우저에 접속하고 admin/admin으로 Airflow WebUI에 접속합니다. Airflow WebUI에 성공적으로 접속하게되면 아래와 같이 Airflow에 접속이 가능하게 됩니다.
+Terraform이 성공적으로 실행되면, Terraform 출력 값들이 표시됩니다.
+1. 출력된 값 중 airflow_ip_addr에 표시된 ip 주소를 웹 브라우저에 접속하고 admin/admin으로 Airflow WebUI에 접속합니다. 
+2. Airflow WebUI에 성공적으로 접속하게되면 아래와 같이 Airflow에 접속이 가능하게 됩니다.
 
-<img src="/pic/airflowUI.png" width="70%" height="70%"></img><br/>
+![Alt text](/pic/airflowUI.png)
 
-Aurora와 EC2 인스턴스간 연결을 확인하고, Aurora에서 Table을 생성하기 위해서 airflow_ec2에 접속합니다. airflow_ec2에 접속하여 아래의 명령어를 통해 terraform output 출력 값들을 환경 변수에 저장해주고 Aurora Mysql과의 연결을 확인하고 Table을 생성합니다.
+[Amazon EC2](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#Home:)로 이동하여 Terraform으로 생성한 EC2의 Terminal로 이동합니다. 아래의 명령어를 통해 EC2와 Aurora Mysql과의 연결을 확인하고 Mysql 데이터베이스에 emr_table을 생성합니다.
 
 <pre>
 <code># 환경변수 설정</code>
@@ -59,6 +61,8 @@ Aurora와 EC2 인스턴스간 연결을 확인하고, Aurora에서 Table을 생�
 ## Airflow DAG 확인하기
 Airflow는 workflow 작성을 Python 기반으로 작성하며 이를 DAG라고 표현합니다. Airflow의 DAG는 ~/airflow/dags 디렉토리 아래에 저장하며 해당 디렉토리에 저장된 DAG들은 Airflow WebUI를 통해서 확인이 가능합니다. EC2 인스턴스에 접속하여 아래의 명령어를 통해 S3에 저장된 DAG 파일을 DAG 디렉토리에 복사합니다.
 <pre>
+<code>##S3에 저장해둔 Python DAG파일을 Airflow로 이동 </code>
+
 <code>sudo aws s3 cp $S3_PATH/EMR_DAG.py /root/airflow/dags/ </code>
 </pre>
 업로드를 완료하고 DAG가 업데이트되면 아래와 같이 Airflow WebServer에서 확인 가능합니다.
@@ -79,12 +83,12 @@ Workflow는 총 6단계로 구성됩니다.
 
 ## Airflow 설정 및 DAG 실행하기
 
-앞서 살펴본 DAG는 Airflow를 통해 변수를 전달받아 DAG를 실행합니다. DAG의 실행을 위해 1/ S3_PATH, 2/ SUBNET_ID, 3/ RAW_DATA_PATH, 4/ AURORA_ENDPOINT 총 4개의 변수를 전달받습니다.
-Airflow에서는 변수의 설정을 Variables에 저장하며, DAG에서는 Variable.get()의 명령어를 통해 저장한 Variables을 가져옵니다. Variable 설정을 위해 Airflow UI에서 Admin > Variables로 이동하여 위에서 설명한 4개의 변수를 아래와 같이 등록합니다.
+앞서 살펴본 DAG는 Airflow를 통해 변수를 전달받아 DAG를 실행합니다. DAG의 실행을 위해 **1/S3_PATH**, **2/SUBNET_ID**, **3/RAW_DATA_PATH**, **4/AURORA_ENDPOINT** 총 4개의 변수를 전달받습니다.
+Airflow에서는 변수의 설정을 Variables에 저장하며, DAG에서는 [Variable.get()](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/variables.html)의 명령어를 통해 저장한 Variables을 가져옵니다. Variable 설정을 위해 Airflow UI에서 Admin > Variables로 이동하여 위에서 설명한 4개의 변수를 아래와 같이 등록합니다.
 
 ![Alt text](/pic/VariablesUI.png)
 
-Airflow에서 AWS의 리소스를 생성하고 삭제하기위해서는 Airflow에 Connection 지정이 필요합니다. Airflow UI에서 Admin > Connections의 항목으로 이동하여 **aws_default** 항목을 편집하며, 각 사용자의 Access Key와 Secret Key를 입력 및 Region을 설정해줍니다.
+Airflow에서 AWS의 리소스를 생성하고 삭제하기위해서는 AWS와의 Connection 지정이 필요합니다. Airflow UI에서 Admin > Connections의 항목으로 이동하여 **aws_default** 항목을 편집하며, 사용자의 Access Key, Secret Key, Region을 설정해줍니다.
 
 ![Alt text](/pic/ConnectionUI.png)
 
@@ -97,6 +101,8 @@ Variables와 Connection 설정이 완료되었으면, DAG를 실행합니다.
 <pre>
 <code>mysql -u admin -p -h $AURORA_ENDPOINT # PASSWORD=Administrator</code>
 <code>use airflow; </code>
+
+# 결과 확인
 <code>select * from emr_table;</code>
 
 +------------+---------+
