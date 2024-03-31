@@ -70,6 +70,21 @@ Airflow는 workflow 작성을 Python 기반으로 작성하며 이를 DAG라고 
 
 ![Alt text](/pic/EMR_DAG.png)
 ## 실행 및 결과 확인
+최종 결과 확인을 위하여 EC2에 접속하여, 집계된 결과 값들이 Aurora Mysql 데이터베이스에 잘 저장되었는지 확인합니다.
+<pre>
+<code>mysql -u admin -p -h $AURORA_ENDPOINT # PASSWORD=Administrator</code>
+<code>use airflow; </code>
+<code>select * from emr_table;</code>
++------------+---------+
+| date       | value   |
++------------+---------+
+| 2024-03-31 | 5176450 |
++------------+---------+
+</pre>
+
+EMR Cluster가 데이터 처리 후 정상적으로 종료되었는지 확인하기위해 EMR CLUSTER로 이동합니다.
+
+![Alt text](/pic/EMR_UI.png)
 
 ## 리소스 정리
 Local Client에서 아래의 명령어를 입력하여 실습에 사용한 모든 리소스들을 삭제합니다.
