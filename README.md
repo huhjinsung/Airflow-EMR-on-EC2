@@ -123,3 +123,6 @@ Local Client에서 아래의 명령어를 입력하여 실습에 사용한 모�
 </pre>
 
 ## Reference
+**Terraform AWS Provider** - https://registry.terraform.io/providers/hashicorp/aws/latest/docs
+
+**Airflow AWS Provider** - https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/index.html
