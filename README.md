@@ -84,7 +84,7 @@ Airflow는 workflow 작성을 Python 기반으로 작성하며 이를 DAG라고 
 
 EMR Cluster가 데이터 처리 후 정상적으로 종료되었는지 확인하기위해 EMR CLUSTER로 이동합니다.
 
-![Alt text](/pic/EMR_UI.png)
+![Alt text](/pic/EMRUI.png)
 
 ## 리소스 정리
 Local Client에서 아래의 명령어를 입력하여 실습에 사용한 모든 리소스들을 삭제합니다.
