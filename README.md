@@ -1,5 +1,5 @@
 # Airflow-EMR-on-EC2
-[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/huhjinsung/Airflow-EMR-on-EC2/blob/2556361ad7c78a830de36b9878837339aff5397f/README-en.md)
+[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/huhjinsung/Airflow-EMR-on-EC2/blob/main/README-en.md)
 
 ## 개요
 이번 레포지토리에서는 Airflow를 활용해 AWS의 빅데이터 분석서비스인 EMR을 Scheduling하고 Spark Job을 제출하는 DAG를 설명합니다. 1/EMR Cluster 생성 2/Spark Job 제출 3/ Spark Job 모니터링 및 완료 4/ Cluster 종료의 순으로 Airflow Workflow가 구성됩니다.
