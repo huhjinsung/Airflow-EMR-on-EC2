@@ -1,52 +1,47 @@
-# EMR Scheduling by Airflow DAG
+# Airflow-EMR-on-EC2
+[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/huhjinsung/Airflow-EMR-on-EC2/blob/2556361ad7c78a830de36b9878837339aff5397f/README-en.md)
 
-## Introduction
-This repository describe airflow DAG which schudling EMR cluster to complete big data processing. Airflow Dag contains as below workflow step.
- 1. EMR cluster create 
- 2. ADD step - submit spark job
- 3. Monitoring step - check processing is completed or not
- 4. Terminate cluster - Terminate cluster after big data processing
- 
-Below architecure is for HoL.
+## 개요
+이번 레포지토리에서는 Airflow를 활용해 AWS의 빅데이터 분석서비스인 EMR을 Scheduling하고 Spark Job을 제출하는 DAG를 설명합니다. 1/EMR Cluster 생성 2/Spark Job 제출 3/ Spark Job 모니터링 및 완료 4/ Cluster 종료의 순으로 Airflow Workflow가 구성됩니다.
+
+실습을 위한 아키텍처는 아래와 같습니다.
 
 ![Alt text](/pic/architecture_aws.png)
 
-## Prerequisites
-1. We are going to use Terraform for provisioning infrastrucutre. you have to download terraform on your local pc.
-2. You have to have basic knowledge on python to understand Airflow dag and Pyspark.
-3. HoL is proceeded in 'us-east-1' region.
+## 사전 요구사항
+1. 인프라 구성을 위해 Local Client에 Terraform 설치가 필요합니다.
+2. Airflow Dag, Pyspark 이해를 위한 기본 Python 지식이 필요합니다.
+3. 실습은 AWS의 us-east-1 리전에서 진행합니다.
 
-## Provisioning infra by Terraform.
-Clone this repository on your local pc. Mac or linux is good option to proceed it.
+## Terraform을 통한 인프라 구성
+Git Repository를 Local Client에 Clone 합니다. Local Client는 Mac 또는 Linux 기반의 VM 또는 EC2 환경이면 됩니다.
 
-<pre><code>git clone git@ssh.gitlab.aws.dev:jinsungh/emr-scheduling-by-airflow.git</code>
-<code>cd emr-scheduling-by-airflow</code>
+<pre><code>git clone https://github.com/huhjinsung/Airflow-EMR-on-EC2.git</code>
+<code>cd Airflow-EMR-on-EC2/1_Setup</code>
 <code>terraform init</code>
 <code>terraform apply -auto-approve </code></pre>
 
-For provisioning infra by terraform, you have to input some records for terraform could run.
-
-| Subject | Value |
+Terraform을 실행하기 위해서는 아래의 Input 값들이 필요합니다. 각 AWS 계정에 따라 Input 을 입력합니다.
+| 값 | 내용 |
 |---|---|
-| AWS Access Key | Input your aws access key. |
-| AWS Secret Key | Input your aws secret key. |
-| Account ID | Input your aws account id |
+| AWS Access Key | AWS 계정의 Access Key를 입력합니다. |
+| AWS Secret Key | AWS 계정의 Secret Key를 입력합니다. |
+| Account ID | AWS 계정의 Account ID를 입력합니다. |
 
-You can see terraform output on your terminal after provisioning is completed successfully.
-
-1. Among the output values, open the IP address shown in airflow_ip_addr in a web browser and access the Airflow WebUI as admin/admin. 
-2. After successfully connecting to the Airflow WebUI, you will be able to access Airflow as shown below.
+Terraform이 성공적으로 실행되면, Terraform 출력 값들이 표시됩니다.
+1. 출력된 값 중 airflow_ip_addr에 표시된 ip 주소를 웹 브라우저에 접속하고 admin/admin으로 Airflow WebUI에 접속합니다. 
+2. Airflow WebUI에 성공적으로 접속하게되면 아래와 같이 Airflow에 접속이 가능하게 됩니다.
 
 ![Alt text](/pic/airflowUI.png)
 
-Go to [Amazon EC2](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#Home:) and navigate to the terminal on the EC2 you created with terraform. Execute the command below to verify the connection between EC2 and Aurora Mysql and create an emr_table in the Mysql database.
+[Amazon EC2](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#Home:)로 이동하여 Terraform으로 생성한 EC2의 Terminal로 이동합니다. 아래의 명령어를 통해 EC2와 Aurora Mysql과의 연결을 확인하고 Mysql 데이터베이스에 emr_table을 생성합니다.
 
 <pre>
-<code># Set enviroment varialbes/code>
+<code># 환경변수 설정</code>
 <code>export AURORA_ENDPOINT=[AURORA_ENDOINT]</code>
 <code>export S3_PATH=[S3_PATH]</code>
 
-<code>#Connect database and create table.</code>
+<code>#데이터베이스 접속 및 테이블 생성</code>
 <code>mysql -u admin -p -h $AURORA_ENDPOINT # PASSWORD=Administrator</code>
 <code>use airflow; </code>
 <code>select database();</code>
@@ -55,7 +50,7 @@ Go to [Amazon EC2](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-e
     value INT
 );</code>
 
-# Check table
+# 생성한 테이블 확인
 <code>SHOW TABLES;</code>
 +-------------------+
 | Tables_in_airflow |
@@ -64,52 +59,51 @@ Go to [Amazon EC2](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-e
 +-------------------+
 </pre>
 
-## Check Airflow DAG
-Airflow builds workflows in Python and represents them as DAGs. Airflow stores DAGs under the ~/airflow/dags directory, and you can view DAGs stored in that directory through the Airflow WebUI. Connect to your EC2 instance and execute the command below to copy the DAG file stored in S3 to the DAG directory.
+## Airflow DAG 확인하기
+Airflow는 workflow 작성을 Python 기반으로 작성하며 이를 DAG라고 표현합니다. Airflow의 DAG는 ~/airflow/dags 디렉토리 아래에 저장하며 해당 디렉토리에 저장된 DAG들은 Airflow WebUI를 통해서 확인이 가능합니다. EC2 인스턴스에 접속하여 아래의 명령어를 통해 S3에 저장된 DAG 파일을 DAG 디렉토리에 복사합니다.
 <pre>
-<code>##Copy Python Dag to airflow directory </code>
+<code>##S3에 저장해둔 Python DAG파일을 Airflow로 이동 </code>
 
 <code>sudo aws s3 cp $S3_PATH/EMR_DAG.py /root/airflow/dags/ </code>
 </pre>
-Once the upload is complete and the DAG is updated, you will see it in the Airflow UI as shown below (it will take a while for the DAG to update).
+업로드를 완료하고 DAG가 업데이트되면 아래와 같이 Airflow WebServer에서 확인 가능합니다.(DAG가 업데이트까지 시간이 소요됩니다.)
 
 ![Alt text](/pic/EMR_DAG.png)
 
-To explore the Airflow DAG, click the DAG to view the graph.
+Airflow DAG를 살펴보기 위해 DAG를 클릭하여 Graph를 확인합니다.
 
 ![Alt text](/pic/workflowUI.png)
 
-The workflow consists of six steps.
-1. **START_JOB** : [PythonOperator](https://airflow.apache.org/docs/apache-airflow/stable/howto/operator/python.html)which is Python-based and outputs variables stored in Airflow.
-2. **CREATE_EMR_CLUSTER** : [EmrCreateJobFlowOperator](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/_api/airflow/providers/amazon/aws/operators/emr/index.html#airflow.providers.amazon.aws.operators.emr.EmrCreateJobFlowOperator), creates an EMR cluster with the settings you specify.
-3. **ADD_EMR_STEP** : [EmrAddStepsOperator](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/_api/airflow/providers/amazon/aws/operators/emr/index.html#airflow.providers.amazon.aws.operators.emr.EmrAddStepsOperato), submits a Spark job to the cluster you created. The Spark job utilizes the job stored in S3 and also submits a Mysql JAR to store the output in Mysql in Pyspark.
-4. **MONITOR_EMR_STEP** : [EmrStepSensor](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/_api/airflow/providers/amazon/aws/sensors/emr/index.html),  checks to see if the Spark Job you submitted completed successfully. If the Spark Job will complete, it completes the step and moves to the next step.
-5. **TERMINATE_CLUSTER** : [EmrTerminateJobFlowOperator](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/_api/airflow/providers/amazon/aws/operators/emr/index.html#airflow.providers.amazon.aws.operators.emr.EmrTerminateJobFlowOperator), terminate the cluster created in step 2 because data processing is complete.
-6. **END_JOB** : [DummyOperator](https://airflow.apache.org/docs/apache-airflow/2.2.4/_api/airflow/operators/dummy/index.html), Dummy Operator to confirm the end of the entire workflow.
+Workflow는 총 6단계로 구성됩니다.
+1. **START_JOB** : [PythonOperator](https://airflow.apache.org/docs/apache-airflow/stable/howto/operator/python.html)로, Python 기반으로 동작하며 Airflow에 저장된 변수들을 출력합니다.
+2. **CREATE_EMR_CLUSTER** : [EmrCreateJobFlowOperator](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/_api/airflow/providers/amazon/aws/operators/emr/index.html#airflow.providers.amazon.aws.operators.emr.EmrCreateJobFlowOperator)이며, 사용자가 지정한 설정에 맞게 EMR 클러스터를 생성합니다.
+3. **ADD_EMR_STEP** : [EmrAddStepsOperator](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/_api/airflow/providers/amazon/aws/operators/emr/index.html#airflow.providers.amazon.aws.operators.emr.EmrAddStepsOperato)이며, 생성한 클러스터에 Spark job을 제출합니다. Spark Job은 S3에 저장되어 있는 Job을 활용하며, Pyspark에서 Mysql에 Output을 저장하기 위하여 Mysql JAR도 함께 제출합니다.
+4. **MONITOR_EMR_STEP** : [EmrStepSensor](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/_api/airflow/providers/amazon/aws/sensors/emr/index.html)이며, 제출한 Spark Job이 정상적으로 완료되었는지 확인합니다. Spark Job이 완료 될 경우 Step을 Complete하고 다음 단계로 이동합니다.
+5. **TERMINATE_CLUSTER** : [EmrTerminateJobFlowOperator](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/_api/airflow/providers/amazon/aws/operators/emr/index.html#airflow.providers.amazon.aws.operators.emr.EmrTerminateJobFlowOperator)이며, 데이터 처리가 완료되었으므로 2단계에서 생성한 Cluster를 종료합니다.
+6. **END_JOB** : [DummyOperator](https://airflow.apache.org/docs/apache-airflow/2.2.4/_api/airflow/operators/dummy/index.html)로, 전체 Workflow의 종료를 확인하기 위한 Dummy Step입니다.
 
-## Setting up Airflow and running a DAG
+## Airflow 설정 및 DAG 실행하기
 
-The DAG we saw earlier uses Airflow to pass variables to run the DAG. To run the DAG , it receives four variables:1/S3_PATH, 2/SUBNET_ID, 3/RAW_DATA_PATH,  and4/AURORA_ENDPOINT. Airflow saves the variable settings in Variables, and DAG gets the saved variables through the [Variable.get()](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/variables.html) command. To set the variables, go to Admin > Variables in the Airflow UI and register the four variables described above as follows.
-
+앞서 살펴본 DAG는 Airflow를 통해 변수를 전달받아 DAG를 실행합니다. DAG의 실행을 위해 **1/S3_PATH**, **2/SUBNET_ID**, **3/RAW_DATA_PATH**, **4/AURORA_ENDPOINT** 총 4개의 변수를 전달받습니다.
+Airflow에서는 변수의 설정을 Variables에 저장하며, DAG에서는 [Variable.get()](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/variables.html)의 명령어를 통해 저장한 Variables을 가져옵니다. Variable 설정을 위해 Airflow UI에서 Admin > Variables로 이동하여 위에서 설명한 4개의 변수를 아래와 같이 등록합니다.
 
 ![Alt text](/pic/VariablesUI.png)
 
-In order to create and delete resources in AWS, you need to specify a connection with AWS. In the Airflow UI, go to Admin > Connections and edit the **aws_default** entry, which sets the Access Key, Secret Key, and Region for the user.
+Airflow에서 AWS의 리소스를 생성하고 삭제하기위해서는 AWS와의 Connection 지정이 필요합니다. Airflow UI에서 Admin > Connections의 항목으로 이동하여 **aws_default** 항목을 편집하며, 사용자의 Access Key, Secret Key, Region을 설정해줍니다.
 
 ![Alt text](/pic/ConnectionUI.png)
 
-Once you've set up your Variables and Connections, run the DAG.
+Variables와 Connection 설정이 완료되었으면, DAG를 실행합니다.
 
 ![Alt text](/pic/RunUI.png)
 
-## Check output.
-To verify the final result, connect to EC2 and verify that the aggregated result values have been successfully stored in the Aurora Mysql database.
-
+## 결과 확인
+최종 결과 확인을 위하여 EC2에 접속하여, 집계된 결과 값들이 Aurora Mysql 데이터베이스에 잘 저장되었는지 확인합니다.
 <pre>
 <code>mysql -u admin -p -h $AURORA_ENDPOINT # PASSWORD=Administrator</code>
 <code>use airflow; </code>
 
-# check result.
+# 결과 확인
 <code>select * from emr_table;</code>
 
 +------------+---------+
@@ -119,16 +113,16 @@ To verify the final result, connect to EC2 and verify that the aggregated result
 +------------+---------+
 </pre>
 
-Go to EMR CLUSTER to verify that EMR Cluster has shut down properly after processing data.
+EMR Cluster가 데이터 처리 후 정상적으로 종료되었는지 확인하기위해 EMR CLUSTER로 이동합니다.
 
 ![Alt text](/pic/EMRUI.png)
 
-You can also see in Airflow's Workflow Graph that all steps succeeded as expected.
+Airflow의 Workflow Graph에서도 모든 Step이 정상적으로 Success 된 사항을 확인 할 수 있습니다.
 
 ![Alt text](/pic/CompleteUI.png)
 
-## Clean resource.
-In the Local Client, enter the command below to delete all resources used in the lab.
+## 리소스 정리
+Local Client에서 아래의 명령어를 입력하여 실습에 사용한 모든 리소스들을 삭제합니다.
 <pre>
 <code>terraform destroy -auto-approve </code>
 </pre>
